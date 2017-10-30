@@ -12,7 +12,7 @@ from theatre_tcp_ip import Network
 
 class TCPDirections(object):
     """
-    The setup script for running a simulation of TCP behaviour.
+    The setup script for running a simulation of TCP behaviour within this test.
     """
 
     def __init__(self, network, tcp_server_address):
