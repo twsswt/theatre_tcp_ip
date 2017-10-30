@@ -34,7 +34,7 @@ class TCPDirections(object):
             tcp_client.allocate_task(tcp_client_workflow.send_syn)
 
 
-class TCPIPDirectionsTest(unittest.TestCase):
+class TCPIPTest(unittest.TestCase):
 
     def setUp(self):
         self.clock = SynchronizingClock(10)
