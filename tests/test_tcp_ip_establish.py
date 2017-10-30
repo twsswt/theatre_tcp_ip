@@ -1,6 +1,6 @@
 import unittest
 
-from theatre_ag import TaskQueueActor, Cast, SynchronizingClock, Episode
+from theatre_ag import TaskQueueActor, Cast, SynchronizingClock, Episode, format_task_trees
 
 from theatre_tcp_ip import TCPDirections
 from theatre_tcp_ip import Network
@@ -24,6 +24,9 @@ class TCPIPDirectionsTest(unittest.TestCase):
         episode = Episode(self.clock, self.cast, directions)
 
         episode.perform()
+
+        print format_task_trees(self.tcp_client.task_history)
+        print format_task_trees(self.tcp_server.task_history)
 
         self.assertSetEqual({'tcp_client'}, self.tcp_server.task_history[0].workflow.established_connections)
 

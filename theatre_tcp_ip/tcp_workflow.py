@@ -1,3 +1,6 @@
+from theatre_ag import default_cost
+
+
 class TCPDirections(object):
 
     def __init__(self, network, tcp_server_address):
@@ -9,7 +12,7 @@ class TCPDirections(object):
         tcp_server = filter(lambda m: m.logical_name is self.tcp_server_address, cast)[0]
         server_nix = self.network.create_network_endpoint(self.tcp_server_address)
         tcp_server_workflow = TCPServer(server_nix)
-        tcp_server.allocate_task(tcp_server_workflow.wait_for_syn)
+        tcp_server.allocate_task(tcp_server_workflow.wait_for_syns)
 
         tcp_clients = filter(lambda m: m.logical_name is not self.tcp_server_address, cast)
 
@@ -35,11 +38,17 @@ class TCPClient(object):
         self.wait_for_syn_ack()
 
     def wait_for_syn_ack(self):
-        source_address, message = self.network_endpoint.read_message()
-        if message is "SYN_ACK":
-            self.network_endpoint.send_message(self.server_address, "ACK")
-        else:
-            pass
+        while True:
+            source_address, message = self.poll_interface()
+            if message is "SYN_ACK":
+                self.network_endpoint.send_message(self.server_address, "ACK")
+                break
+            else:
+                pass
+
+    @default_cost(1)
+    def poll_interface(self):
+        return self.network_endpoint.read_message()
 
 
 class TCPServer(object):
@@ -53,13 +62,24 @@ class TCPServer(object):
         self.network_endpoint = network_endpoint
         self.established_connections = set()
 
-    def wait_for_syn(self):
-        packet = self.network_endpoint.read_message()
-        if packet[1] is "SYN":
-            self.network_endpoint.send_message(packet[0], "SYN_ACK")
-            self.wait_for_ack()
+    def wait_for_syns(self):
+        while True:
+            source, message = self.poll_interface()
+            if message is not None and message is "SYN":
+                self.send_syn_ack(source)
+                self.wait_for_ack()
 
     def wait_for_ack(self):
-        source_address, message = self.network_endpoint.read_message()
-        if message is "ACK":
-            self.established_connections.add(source_address)
+        while True:
+            source_address, message = self.poll_interface()
+            if message is "ACK":
+                self.established_connections.add(source_address)
+                break
+
+    @default_cost(1)
+    def poll_interface(self):
+        return self.network_endpoint.read_message()
+
+    @default_cost(1)
+    def send_syn_ack(self, source):
+        self.network_endpoint.send_message(source, "SYN_ACK")

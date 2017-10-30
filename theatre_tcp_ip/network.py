@@ -1,4 +1,4 @@
-from Queue import Queue
+from Queue import Empty, Queue
 
 
 class Network(object):
@@ -31,5 +31,8 @@ class NetworkEndpoint(object):
         self.network.route(self.address, destination_address, message)
 
     def read_message(self):
-        return self.message_queue.get()
+        try:
+            return self.message_queue.get(block=False)
+        except Empty:
+            return None, None
 
